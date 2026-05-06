@@ -23,20 +23,12 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { itemInputSchema } from "@/lib/validations/item";
-
-// The shape the form expects in return for showing field errors.
-// We use `useActionState` on the client to read this.
-export type CreateItemState =
-  | { ok: true }
-  | {
-      ok: false;
-      errors: Partial<Record<"title" | "type" | "status" | "rating" | "notes" | "_form", string[]>>;
-    };
+import type { ItemFormState } from "@/components/item-form";
 
 export async function createItemAction(
-  _prev: CreateItemState | undefined,
+  _prev: ItemFormState | undefined,
   formData: FormData,
-): Promise<CreateItemState> {
+): Promise<ItemFormState> {
   // (1) AUTH
   const session = await auth();
   if (!session?.user?.id) {

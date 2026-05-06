@@ -6,7 +6,10 @@
 // Keeping the prop shape minimal also makes the card easier to reuse for
 // search results / filtered views later.
 
+import Link from "next/link";
+
 import type { ItemStatus, ItemType } from "@/generated/prisma/enums";
+import DeleteItemButton from "./delete-item-button";
 
 type ItemCardProps = {
   id: string;
@@ -46,7 +49,7 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-export default function ItemCard({ title, type, status, rating, notes }: ItemCardProps) {
+export default function ItemCard({ id, title, type, status, rating, notes }: ItemCardProps) {
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-start justify-between gap-3">
@@ -70,6 +73,16 @@ export default function ItemCard({ title, type, status, rating, notes }: ItemCar
           {notes}
         </p>
       )}
+
+      <div className="mt-auto flex items-center gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-900">
+        <Link
+          href={`/items/${id}/edit`}
+          className="text-xs font-medium text-zinc-700 hover:text-black hover:underline dark:text-zinc-300 dark:hover:text-zinc-50"
+        >
+          Edit
+        </Link>
+        <DeleteItemButton itemId={id} itemTitle={title} />
+      </div>
     </article>
   );
 }

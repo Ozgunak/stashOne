@@ -1,19 +1,36 @@
 "use client";
 
-// Client component for the "New item" form. Needed because we use
-// useActionState and useFormStatus to show errors and a loading state.
+// Reusable form component for creating AND editing an Item. The page
+// passes in the action, default values (for edit), and the submit
+// label. Everything else — fields, error rendering, loading state —
+// is identical between create and edit.
 //
-// The form itself is plain HTML. The action prop receives our server
-// action wrapped by useActionState — React handles posting FormData
-// and getting back our CreateItemState. We never write a fetch() or
-// touch JSON manually.
+// This is the standard Next.js pattern for "shared form, different
+// action": the form is the UI; the action is the behavior.
 
 import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { createItemAction, type CreateItemState } from "./actions";
 import { ITEM_STATUSES, ITEM_TYPES } from "@/lib/validations/item";
+
+// State shape both create and update actions return.
+export type ItemFormState =
+  | { ok: true }
+  | {
+      ok: false;
+      errors: Partial<Record<"title" | "type" | "status" | "rating" | "notes" | "_form", string[]>>;
+    };
+
+type Action = (prev: ItemFormState | undefined, formData: FormData) => Promise<ItemFormState>;
+
+type Defaults = {
+  title?: string;
+  type?: (typeof ITEM_TYPES)[number];
+  status?: (typeof ITEM_STATUSES)[number];
+  rating?: number | null;
+  notes?: string | null;
+};
 
 const TYPE_LABEL: Record<(typeof ITEM_TYPES)[number], string> = {
   BOOK: "Book",
@@ -26,16 +43,14 @@ const STATUS_LABEL: Record<(typeof ITEM_STATUSES)[number], string> = {
   DONE: "Done",
 };
 
-function fieldError(state: CreateItemState | undefined, key: keyof Extract<CreateItemState, { ok: false }>["errors"]) {
+function fieldError(state: ItemFormState | undefined, key: keyof Extract<ItemFormState, { ok: false }>["errors"]) {
   if (!state || state.ok) return null;
   const messages = state.errors[key];
   if (!messages?.length) return null;
   return <p className="mt-1 text-xs text-red-600 dark:text-red-400">{messages[0]}</p>;
 }
 
-function SubmitButton() {
-  // useFormStatus reads the parent form's submission state. Disables the
-  // button while the action is in flight, which prevents double-submits.
+function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -43,19 +58,33 @@ function SubmitButton() {
       disabled={pending}
       className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
     >
-      {pending ? "Saving…" : "Save item"}
+      {pending ? "Saving…" : label}
     </button>
   );
 }
 
-export default function NewItemForm() {
-  const [state, formAction] = useActionState<CreateItemState | undefined, FormData>(
-    createItemAction,
+export default function ItemForm({
+  action,
+  defaults,
+  submitLabel,
+  itemId,
+}: {
+  action: Action;
+  defaults?: Defaults;
+  submitLabel: string;
+  // For edit: id passed as a hidden field. The action re-validates
+  // ownership server-side, so tampering with this is harmless.
+  itemId?: string;
+}) {
+  const [state, formAction] = useActionState<ItemFormState | undefined, FormData>(
+    action,
     undefined,
   );
 
   return (
     <form action={formAction} className="space-y-4">
+      {itemId && <input type="hidden" name="id" value={itemId} />}
+
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-black dark:text-zinc-50">
           Title
@@ -66,6 +95,7 @@ export default function NewItemForm() {
           type="text"
           required
           autoFocus
+          defaultValue={defaults?.title ?? ""}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-black focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
         />
         {fieldError(state, "title")}
@@ -80,7 +110,7 @@ export default function NewItemForm() {
             id="type"
             name="type"
             required
-            defaultValue="BOOK"
+            defaultValue={defaults?.type ?? "BOOK"}
             className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-black focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
           >
             {ITEM_TYPES.map((t) => (
@@ -100,7 +130,7 @@ export default function NewItemForm() {
             id="status"
             name="status"
             required
-            defaultValue="WANT"
+            defaultValue={defaults?.status ?? "WANT"}
             className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-black focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
           >
             {ITEM_STATUSES.map((s) => (
@@ -123,6 +153,7 @@ export default function NewItemForm() {
           type="number"
           min={1}
           max={5}
+          defaultValue={defaults?.rating ?? ""}
           className="mt-1 w-32 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-black focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
         />
         {fieldError(state, "rating")}
@@ -136,6 +167,7 @@ export default function NewItemForm() {
           id="notes"
           name="notes"
           rows={4}
+          defaultValue={defaults?.notes ?? ""}
           className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-black focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
         />
         {fieldError(state, "notes")}
@@ -146,7 +178,7 @@ export default function NewItemForm() {
       )}
 
       <div className="flex items-center gap-3 pt-2">
-        <SubmitButton />
+        <SubmitButton label={submitLabel} />
         <Link href="/items" className="text-sm text-zinc-600 hover:underline dark:text-zinc-400">
           Cancel
         </Link>
