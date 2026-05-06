@@ -42,6 +42,23 @@ export const itemInputSchema = z.object({
     .max(5000, "Notes must be 5000 characters or less")
     .optional()
     .transform((v) => (v === undefined || v === "" ? null : v)),
+
+  // Tags as a single comma-separated string (the form posts one input).
+  // We split, lowercase, trim, dedupe, and cap each tag at 40 chars and
+  // the total at 20 tags per item. Empty input becomes [].
+  tags: z
+    .string()
+    .max(1000) // raw input length cap
+    .optional()
+    .transform((v) => {
+      if (!v) return [] as string[];
+      const parts = v
+        .split(",")
+        .map((t) => t.trim().toLowerCase())
+        .filter((t) => t.length > 0 && t.length <= 40);
+      // dedupe preserving first-seen order
+      return Array.from(new Set(parts)).slice(0, 20);
+    }),
 });
 
 export type ItemInput = z.infer<typeof itemInputSchema>;

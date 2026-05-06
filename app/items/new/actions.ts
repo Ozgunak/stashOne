@@ -34,6 +34,7 @@ export async function createItemAction(
   if (!session?.user?.id) {
     return { ok: false, errors: { _form: ["You must be signed in."] } };
   }
+  const userId = session.user.id; // narrow once for closures below
 
   // (2) VALIDATION — convert FormData to a plain object first so Zod
   // can parse it. FormData values can be Files; we only care about strings.
@@ -45,10 +46,25 @@ export async function createItemAction(
   }
 
   // (3) OWNERSHIP — userId comes from the SERVER session, never from form.
+  // We split tags off from the rest of the item data because they live
+  // in a separate table. Each tag is `connectOrCreate`d under the unique
+  // constraint (userId, name) we set in schema.prisma — so the same tag
+  // name typed on a second item reuses the existing Tag row.
+  const { tags, ...itemData } = parsed.data;
   await prisma.item.create({
     data: {
-      ...parsed.data,
-      userId: session.user.id,
+      ...itemData,
+      userId,
+      tags: {
+        create: tags.map((name) => ({
+          tag: {
+            connectOrCreate: {
+              where: { userId_name: { userId, name } },
+              create: { userId, name },
+            },
+          },
+        })),
+      },
     },
   });
 

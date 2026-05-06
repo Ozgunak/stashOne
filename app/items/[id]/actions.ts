@@ -48,6 +48,7 @@ export async function updateItemAction(
   if (!session?.user?.id) {
     return { ok: false, errors: { _form: ["You must be signed in."] } };
   }
+  const userId = session.user.id;
 
   const id = formData.get("id");
   if (typeof id !== "string" || !id) {
@@ -56,7 +57,7 @@ export async function updateItemAction(
 
   // 2. OWNERSHIP — before we even bother validating, refuse if this
   // isn't the user's item.
-  const existing = await findOwnedItem(id, session.user.id);
+  const existing = await findOwnedItem(id, userId);
   if (!existing) {
     return { ok: false, errors: { _form: ["Item not found."] } };
   }
@@ -68,12 +69,30 @@ export async function updateItemAction(
     return { ok: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  await prisma.item.update({
-    where: { id },
-    data: parsed.data,
-    // Note we DO NOT update userId. Even if the form somehow had one,
-    // ownership is fixed at creation time.
-  });
+  // Tag handling: we wipe and rewrite. The simplest atomic strategy
+  // (alternative: diff old vs new and patch — more code, no real win).
+  // Wrapped in a transaction so concurrent edits can't half-apply.
+  const { tags, ...itemData } = parsed.data;
+  await prisma.$transaction([
+    prisma.itemTag.deleteMany({ where: { itemId: id } }),
+    prisma.item.update({
+      where: { id },
+      data: {
+        ...itemData,
+        // Note we DO NOT update userId. Ownership is fixed at creation.
+        tags: {
+          create: tags.map((name) => ({
+            tag: {
+              connectOrCreate: {
+                where: { userId_name: { userId, name } },
+                create: { userId, name },
+              },
+            },
+          })),
+        },
+      },
+    }),
+  ]);
 
   revalidatePath("/items");
   redirect("/items");

@@ -18,6 +18,7 @@ type ItemCardProps = {
   status: ItemStatus;
   rating: number | null;
   notes: string | null;
+  tags: string[];
 };
 
 const TYPE_LABEL: Record<ItemType, string> = {
@@ -49,7 +50,7 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-export default function ItemCard({ id, title, type, status, rating, notes }: ItemCardProps) {
+export default function ItemCard({ id, title, type, status, rating, notes, tags }: ItemCardProps) {
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-start justify-between gap-3">
@@ -67,6 +68,20 @@ export default function ItemCard({ id, title, type, status, rating, notes }: Ite
         </span>
         {rating != null && <Stars rating={rating} />}
       </div>
+
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {tags.map((tag) => (
+            <Link
+              key={tag}
+              href={`/items?tag=${encodeURIComponent(tag)}`}
+              className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            >
+              #{tag}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {notes && (
         <p className="line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">

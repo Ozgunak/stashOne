@@ -19,7 +19,7 @@ export type ItemFormState =
   | { ok: true }
   | {
       ok: false;
-      errors: Partial<Record<"title" | "type" | "status" | "rating" | "notes" | "_form", string[]>>;
+      errors: Partial<Record<"title" | "type" | "status" | "rating" | "notes" | "tags" | "_form", string[]>>;
     };
 
 type Action = (prev: ItemFormState | undefined, formData: FormData) => Promise<ItemFormState>;
@@ -30,6 +30,9 @@ type Defaults = {
   status?: (typeof ITEM_STATUSES)[number];
   rating?: number | null;
   notes?: string | null;
+  // Tags come in as an array of strings; we render them as a single
+  // comma-separated input. The validation schema splits them back out.
+  tags?: string[];
 };
 
 const TYPE_LABEL: Record<(typeof ITEM_TYPES)[number], string> = {
@@ -157,6 +160,21 @@ export default function ItemForm({
           className="mt-1 w-32 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-black focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
         />
         {fieldError(state, "rating")}
+      </div>
+
+      <div>
+        <label htmlFor="tags" className="block text-sm font-medium text-black dark:text-zinc-50">
+          Tags <span className="text-zinc-500">(optional, comma-separated)</span>
+        </label>
+        <input
+          id="tags"
+          name="tags"
+          type="text"
+          placeholder="fiction, sci-fi, post-apocalyptic"
+          defaultValue={defaults?.tags?.join(", ") ?? ""}
+          className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-black focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+        />
+        {fieldError(state, "tags")}
       </div>
 
       <div>

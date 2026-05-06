@@ -38,6 +38,9 @@ export default async function EditItemPage({
       status: true,
       rating: true,
       notes: true,
+      // Pull the tag names via the join table so the form can prefill.
+      // The relation chain: Item -> ItemTag[] -> Tag.name.
+      tags: { select: { tag: { select: { name: true } } } },
     },
   });
 
@@ -60,6 +63,7 @@ export default async function EditItemPage({
           status: item.status,
           rating: item.rating,
           notes: item.notes,
+          tags: item.tags.map((t) => t.tag.name),
         }}
       />
     </main>
