@@ -39,8 +39,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   pages: {
     // Custom sign-in URL instead of Auth.js's default /api/auth/signin.
-    // We'll build this page in M3.7.
     signIn: "/signin",
+  },
+
+  callbacks: {
+    // Auth.js v5 default `session.user` only includes name/email/image.
+    // We need `id` for every per-user query (Item.userId === session.user.id).
+    // Without this callback, `session.user.id` would be undefined, and
+    // `prisma.item.findMany({ where: { userId: undefined } })` would
+    // return EVERY user's items — a critical security hole. M4's lesson.
+    session({ session, user }) {
+      session.user.id = user.id;
+      return session;
+    },
   },
 
   // We rely on AUTH_SECRET being set in the env. Auth.js will throw a

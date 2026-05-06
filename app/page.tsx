@@ -1,28 +1,21 @@
-import { prisma } from "@/lib/prisma";
+// Homepage. Two states: signed out shows marketing copy + sign-in CTA
+// (Header has the actual button). Signed in shows a personalized
+// "View your stash" entry point.
+//
+// We deliberately removed the M2-era unfiltered `prisma.item.count()`
+// because it was teaching the wrong pattern. Per-user data only ever
+// gets queried from /items (where the userId filter actually lives).
 
-// `force-dynamic` tells Next.js to render this page on every request rather
-// than caching it at build time — without this, the count would freeze at
-// whatever the value was during deployment. We'll usually want dynamic
-// rendering for any page that reads from the database.
+import Link from "next/link";
+import { auth } from "@/auth";
+
 export const dynamic = "force-dynamic";
 
-// Server component (no "use client" directive). Runs ONLY on the server,
-// can `await` Prisma queries directly, and ships zero JS to the browser.
-// The HTML the browser receives already has the count baked in.
 export default async function Home() {
-  let countLine: string;
-  try {
-    const count = await prisma.item.count();
-    countLine = `${count} items in the stash`;
-  } catch (err) {
-    // If the DB env var is missing or wrong, don't crash the homepage —
-    // show a fallback so we can still see the deploy succeeded.
-    console.error("Failed to count items:", err);
-    countLine = "(could not reach the database)";
-  }
+  const session = await auth();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-6 dark:bg-black">
+    <main className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-6 dark:bg-black">
       <div className="flex flex-col items-center gap-4 text-center">
         <h1 className="text-6xl font-bold tracking-tight text-black dark:text-zinc-50">
           Stash
@@ -30,9 +23,14 @@ export default async function Home() {
         <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-400">
           Your personal media tracker. Books, movies, shows — everything you&apos;ve loved or want to.
         </p>
-        <p className="mt-4 font-mono text-sm text-zinc-500 dark:text-zinc-500">
-          {countLine}
-        </p>
+        {session?.user ? (
+          <Link
+            href="/items"
+            className="mt-4 rounded-md bg-black px-4 py-2 text-base font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
+          >
+            View your stash →
+          </Link>
+        ) : null}
       </div>
     </main>
   );
