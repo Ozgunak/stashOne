@@ -8,6 +8,8 @@
 
 import { signIn } from "@/auth";
 
+export const metadata = { title: "Sign in" };
+
 async function signInAction(formData: FormData) {
   "use server"; // marks this function as a server action
 

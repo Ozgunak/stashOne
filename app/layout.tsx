@@ -14,8 +14,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Stash",
-  description: "Your personal media tracker.",
+  title: {
+    template: "%s · Stash",
+    default: "Stash",
+  },
+  description: "Your personal media tracker. Books, movies, shows — everything you've loved or want to.",
+  applicationName: "Stash",
+  openGraph: {
+    title: "Stash",
+    description: "Your personal media tracker.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

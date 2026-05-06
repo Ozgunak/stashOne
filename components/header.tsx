@@ -24,7 +24,11 @@ export default async function Header() {
 
       {session?.user ? (
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-zinc-600 dark:text-zinc-400">
+          {/*
+            Email is hidden on phone-narrow screens (<640px). The Sign-out
+            button stays visible. Avoids cramping the header on mobile.
+          */}
+          <span className="hidden text-zinc-600 sm:inline dark:text-zinc-400">
             {session.user.email}
           </span>
           <form

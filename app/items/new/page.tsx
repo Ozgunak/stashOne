@@ -7,6 +7,8 @@ import { createItemAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "New item" };
+
 export default function NewItemPage() {
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-6 py-8">

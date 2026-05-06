@@ -23,6 +23,8 @@ import SearchInput from "@/components/search-input";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "Your stash" };
+
 export default async function ItemsPage({
   searchParams,
 }: {

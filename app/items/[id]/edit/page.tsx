@@ -16,6 +16,8 @@ import { updateItemAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "Edit item" };
+
 export default async function EditItemPage({
   params,
 }: {
