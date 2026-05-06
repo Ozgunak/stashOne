@@ -5,8 +5,18 @@
 // route to write, no fetch from the client). It calls Auth.js's signIn(),
 // which generates a magic-link token, stores it in the VerificationToken
 // table, and asks Resend to email the user.
+//
+// M10 addition: rate limiting. Every signin attempt is checked against
+// two limiters (per email + per IP) before we let signIn() run. If either
+// trips, we redirect to /signin?error=rate-limit and the user sees a
+// friendly message. WITHOUT this, an attacker can spam any email through
+// our /signin endpoint and exhaust Resend's free quota in seconds.
+
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { signIn } from "@/auth";
+import { signinEmailLimiter, signinIpLimiter } from "@/lib/ratelimit";
 
 export const metadata = { title: "Sign in" };
 
@@ -15,17 +25,47 @@ async function signInAction(formData: FormData) {
 
   const email = formData.get("email");
   if (typeof email !== "string" || !email) {
-    throw new Error("Email is required");
+    redirect("/signin?error=invalid-email");
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // Pull the client IP from request headers. On Vercel, x-forwarded-for
+  // is the canonical header; the LEFT-MOST entry is the originating IP.
+  // Fallback to a placeholder so local dev still rate-limits.
+  const reqHeaders = await headers();
+  const forwarded = reqHeaders.get("x-forwarded-for");
+  const ip = forwarded?.split(",")[0]?.trim() || reqHeaders.get("x-real-ip") || "unknown";
+
+  // Check both limiters in parallel. Either tripping is enough to block.
+  const [emailCheck, ipCheck] = await Promise.all([
+    signinEmailLimiter.limit(normalizedEmail),
+    signinIpLimiter.limit(ip),
+  ]);
+
+  if (!emailCheck.success || !ipCheck.success) {
+    // Same opaque error regardless of which limiter tripped — don't
+    // give an attacker information about which dimension is throttling.
+    redirect("/signin?error=rate-limit");
   }
 
   // signIn() with the "resend" provider triggers the magic-link flow.
-  // After Resend sends the email, Auth.js redirects the browser to a
-  // "Check your email" verification page (handled by Auth.js itself).
-  // `redirectTo` is where the user lands AFTER they click the magic link.
-  await signIn("resend", { email, redirectTo: "/" });
+  await signIn("resend", { email: normalizedEmail, redirectTo: "/" });
 }
 
-export default function SignInPage() {
+const ERROR_MESSAGES: Record<string, string> = {
+  "rate-limit": "Too many attempts. Try again in a few minutes.",
+  "invalid-email": "Please enter a valid email address.",
+};
+
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+  const errorMessage = error ? ERROR_MESSAGES[error] : null;
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-6 dark:bg-black">
       <div className="w-full max-w-sm space-y-6">
@@ -37,6 +77,13 @@ export default function SignInPage() {
             We&apos;ll email you a one-time link.
           </p>
         </div>
+
+        {errorMessage && (
+          <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+            {errorMessage}
+          </div>
+        )}
+
         <form action={signInAction} className="space-y-3">
           <input
             type="email"
