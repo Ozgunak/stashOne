@@ -15,6 +15,8 @@
 // who somehow bypassed the session check (or just signed in with a
 // different account) would see EVERYONE's items.
 
+import Link from "next/link";
+
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import ItemCard from "@/components/item-card";
@@ -53,13 +55,21 @@ export default async function ItemsPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">
-      <div className="mb-6 flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
-          Your stash
-        </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-500">
-          {items.length} {items.length === 1 ? "item" : "items"}
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+            Your stash
+          </h1>
+          <span className="text-sm text-zinc-500 dark:text-zinc-500">
+            {items.length} {items.length === 1 ? "item" : "items"}
+          </span>
+        </div>
+        <Link
+          href="/items/new"
+          className="rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
+        >
+          + New item
+        </Link>
       </div>
 
       {items.length === 0 ? (
@@ -90,8 +100,14 @@ function EmptyState() {
         No items yet.
       </p>
       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-        Add your first one. (Add form arrives in M5.)
+        Track the books, movies, and shows you love.
       </p>
+      <Link
+        href="/items/new"
+        className="mt-4 rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
+      >
+        Add your first item
+      </Link>
     </div>
   );
 }
