@@ -27,13 +27,70 @@ enum ItemStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
 
+  // Stash relations
   items Item[]
   tags  Tag[]
+
+  // Auth.js relations (required by @auth/prisma-adapter)
+  accounts Account[]
+  sessions Session[]
+}
+
+// ===== Auth.js v5 schema (required by @auth/prisma-adapter) =====
+//
+// We don't use OAuth providers (only magic-link), so most Account fields
+// will be null in practice. The model still has to exist because the
+// adapter expects it.
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// One row per active session — when you "stay logged in," there's a row here
+// keyed by sessionToken stored in your browser cookie.
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Magic-link tokens: one row per "send me a sign-in email" attempt.
+// Created when the user submits their email; deleted when they click
+// the link (or when expired). This IS the magic link.
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model Item {
