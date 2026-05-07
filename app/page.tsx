@@ -29,31 +29,44 @@ export default async function Home() {
           Signed in as <span className="font-mono">{session?.user?.email}</span>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3 text-sm text-zinc-400">
+        <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
           {/*
-            Placeholder cards. As each milestone lands we'll replace
-            individual entries with real navigation links.
+            Each card becomes a real link as its milestone lands.
+            Placeholders show the upcoming milestone for the others.
           */}
           {[
-            { label: "Teams", milestone: "N4" },
+            { label: "Teams", href: "/teams", ready: true },
             { label: "Players", milestone: "N5" },
             { label: "Schedule", milestone: "N7" },
             { label: "Scores", milestone: "N7" },
             { label: "Standings", milestone: "N7" },
             { label: "Playoffs", milestone: "N8" },
-          ].map((p) => (
-            <div
-              key={p.label}
-              className="rounded-lg border border-dashed border-zinc-300 px-4 py-3 dark:border-zinc-700"
-            >
-              <div className="font-medium text-zinc-600 dark:text-zinc-400">
-                {p.label}
+          ].map((p) =>
+            p.ready ? (
+              <Link
+                key={p.label}
+                href={p.href!}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-3 text-left hover:border-black hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:border-zinc-50 dark:hover:bg-zinc-900"
+              >
+                <div className="font-medium text-black dark:text-zinc-50">
+                  {p.label} →
+                </div>
+                <div className="text-xs text-zinc-500">Browse</div>
+              </Link>
+            ) : (
+              <div
+                key={p.label}
+                className="rounded-lg border border-dashed border-zinc-300 px-4 py-3 dark:border-zinc-700"
+              >
+                <div className="font-medium text-zinc-600 dark:text-zinc-400">
+                  {p.label}
+                </div>
+                <div className="text-xs text-zinc-400 dark:text-zinc-500">
+                  Coming in {p.milestone}
+                </div>
               </div>
-              <div className="text-xs text-zinc-400 dark:text-zinc-500">
-                Coming in {p.milestone}
-              </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </div>
     </main>
