@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -12,19 +10,11 @@ datasource db {
   provider = "postgresql"
 }
 
-// ===== Stash schema =====
-
-enum ItemType {
-  BOOK
-  MOVIE
-  SHOW
-}
-
-enum ItemStatus {
-  WANT
-  IN_PROGRESS
-  DONE
-}
+// ===== Auth.js v5 schema (required by @auth/prisma-adapter) =====
+//
+// Carried over from the Stash project. We don't use OAuth providers
+// (only magic-link), so most Account fields will be null in practice.
+// The model still has to exist because the adapter expects it.
 
 model User {
   id            String    @id @default(cuid())
@@ -34,20 +24,9 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
 
-  // Stash relations
-  items Item[]
-  tags  Tag[]
-
-  // Auth.js relations (required by @auth/prisma-adapter)
   accounts Account[]
   sessions Session[]
 }
-
-// ===== Auth.js v5 schema (required by @auth/prisma-adapter) =====
-//
-// We don't use OAuth providers (only magic-link), so most Account fields
-// will be null in practice. The model still has to exist because the
-// adapter expects it.
 
 model Account {
   id                String  @id @default(cuid())
@@ -93,44 +72,4 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Item {
-  id        String     @id @default(cuid())
-  userId    String
-  title     String
-  type      ItemType
-  status    ItemStatus @default(WANT)
-  rating    Int?
-  notes     String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags ItemTag[]
-
-  @@index([userId])
-}
-
-model Tag {
-  id     String @id @default(cuid())
-  userId String
-  name   String
-
-  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items ItemTag[]
-
-  @@unique([userId, name])
-  @@index([userId])
-}
-
-// Join table for many-to-many between Item and Tag.
-// Composite PK ensures an item can't be tagged with the same tag twice.
-model ItemTag {
-  itemId String
-  tagId  String
-
-  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([itemId, tagId])
-  @@index([tagId])
-}
+// ===== NHL stat-stacker schema lands in N2 =====

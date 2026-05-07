@@ -1,14 +1,14 @@
-// Next.js 16 proxy (formerly "middleware"). Runs on every matched request
-// BEFORE the route handler. We use it to redirect unauthenticated users
-// away from /items/** to /signin.
+// Next.js 16 proxy. Runs on every matched request BEFORE the route
+// handler. Auth-gated everything: any non-public route redirects to
+// /signin if the user isn't authenticated.
 //
-// Auth.js v5 lets us *wrap* the `auth` export with a callback. Inside the
-// callback, `req.auth` is the session (or null/undefined). If there's no
-// session, we redirect to /signin.
+// Public routes (excluded from the matcher):
+//   - /signin             — the sign-in page itself
+//   - /api/auth/*         — Auth.js endpoints (callbacks, session, etc.)
+//   - /icon, /_next/*     — static assets and Next internals
 //
-// Important Next.js 16 nuance: Auth.js docs still say "middleware.ts"
-// because they predate Next 16. The export name *and* the filename both
-// changed (middleware.ts -> proxy.ts; export middleware -> export proxy).
+// Auth.js v5 lets us *wrap* the `auth` export with a callback. Inside
+// the callback `req.auth` is the session (or null). If null, redirect.
 
 import { auth } from "@/auth";
 
@@ -19,10 +19,13 @@ export const proxy = auth((req) => {
   }
 });
 
-// `matcher` tells Next.js which paths to run the proxy on. We only
-// guard /items (and its subroutes). Everything else — homepage, /signin,
-// /api/auth/* — runs without the proxy. Keeping the matcher tight avoids
-// redirect loops and lets the magic-link callback URLs work freely.
+// Matcher: match everything EXCEPT the public paths and Next/static assets.
+// The negative lookahead `(?!...)` excludes these from being matched.
+//   - api/auth   : Auth.js endpoints must stay public (chicken-and-egg)
+//   - signin     : the sign-in page itself
+//   - _next      : Next.js internals (HMR, JS chunks, image optimization)
+//   - icon       : the generated favicon route
+//   - .*\\..*    : files with an extension (favicon.ico, robots.txt, etc.)
 export const config = {
-  matcher: ["/items/:path*"],
+  matcher: ["/((?!api/auth|signin|_next|icon|.*\\..*).*)"],
 };

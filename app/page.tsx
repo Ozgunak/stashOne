@@ -1,12 +1,12 @@
-// Homepage. Two states: signed out shows marketing copy + sign-in CTA
-// (Header has the actual button). Signed in shows a personalized
-// "View your stash" entry point.
+// Homepage. Auth-gated all-routes model: if not signed in, the proxy
+// redirects to /signin before this even renders. So we can assume the
+// session exists here.
 //
-// We deliberately removed the M2-era unfiltered `prisma.item.count()`
-// because it was teaching the wrong pattern. Per-user data only ever
-// gets queried from /items (where the userId filter actually lives).
+// This is the N1 placeholder. Real content lands as the milestones roll
+// in — teams shortcut in N4, scoreboard in N7, favorites in N9, etc.
 
 import Link from "next/link";
+
 import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
@@ -16,21 +16,45 @@ export default async function Home() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-6 dark:bg-black">
-      <div className="flex flex-col items-center gap-4 text-center">
+      <div className="flex max-w-xl flex-col items-center gap-4 text-center">
         <h1 className="text-6xl font-bold tracking-tight text-black dark:text-zinc-50">
-          Stash
+          Stat Stacker
         </h1>
         <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-400">
-          Your personal media tracker. Books, movies, shows — everything you&apos;ve loved or want to.
+          NHL teams, players, schedule, scores — refreshed continuously from the
+          unofficial NHL API. Foundation for a fantasy hockey league later.
         </p>
-        {session?.user ? (
-          <Link
-            href="/items"
-            className="mt-4 rounded-md bg-black px-4 py-2 text-base font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
-          >
-            View your stash →
-          </Link>
-        ) : null}
+
+        <div className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
+          Signed in as <span className="font-mono">{session?.user?.email}</span>
+        </div>
+
+        <div className="mt-6 grid grid-cols-2 gap-3 text-sm text-zinc-400">
+          {/*
+            Placeholder cards. As each milestone lands we'll replace
+            individual entries with real navigation links.
+          */}
+          {[
+            { label: "Teams", milestone: "N4" },
+            { label: "Players", milestone: "N5" },
+            { label: "Schedule", milestone: "N7" },
+            { label: "Scores", milestone: "N7" },
+            { label: "Standings", milestone: "N7" },
+            { label: "Playoffs", milestone: "N8" },
+          ].map((p) => (
+            <div
+              key={p.label}
+              className="rounded-lg border border-dashed border-zinc-300 px-4 py-3 dark:border-zinc-700"
+            >
+              <div className="font-medium text-zinc-600 dark:text-zinc-400">
+                {p.label}
+              </div>
+              <div className="text-xs text-zinc-400 dark:text-zinc-500">
+                Coming in {p.milestone}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </main>
   );
