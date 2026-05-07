@@ -36,7 +36,7 @@ export default async function Home() {
           */}
           {[
             { label: "Teams", href: "/teams", ready: true },
-            { label: "Players", milestone: "N5" },
+            { label: "Players", href: "/players", ready: true },
             { label: "Schedule", milestone: "N7" },
             { label: "Scores", milestone: "N7" },
             { label: "Standings", milestone: "N7" },
