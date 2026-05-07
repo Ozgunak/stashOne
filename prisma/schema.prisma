@@ -100,6 +100,20 @@ enum FavoriteKind {
   PLAYER
 }
 
+enum SyncKind {
+  TEAMS
+  ROSTERS
+  SCHEDULE
+  SCORES
+  DAILY
+}
+
+enum SyncStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
 model Team {
   id           String   @id @default(cuid())
   externalId   Int      @unique // NHL's team ID (e.g. 1 = NJD)
@@ -109,6 +123,16 @@ model Team {
   division     String?  // e.g. "Pacific"
   logoUrl      String?
   primaryColor String?  // e.g. "#FF4C00" — for theming
+
+  // Standings (updated by /api/sync/teams). Default 0 so the columns are
+  // always populated; sync overwrites with real values.
+  gamesPlayed   Int @default(0)
+  wins          Int @default(0)
+  losses        Int @default(0)
+  otLosses      Int @default(0)
+  points        Int @default(0)
+  goalFor       Int @default(0)
+  goalAgainst   Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -208,6 +232,22 @@ model PlayerSeasonStat {
   // One stat row per player per season.
   @@unique([playerId, seasonId])
   @@index([seasonId, points]) // leaderboard query: "top point-scorers this season"
+}
+
+// One row per sync attempt. Lets us answer "why is the data stale?"
+// without needing to read application logs. Captures errors verbatim.
+model SyncRun {
+  id              String     @id @default(cuid())
+  kind            SyncKind
+  status          SyncStatus @default(RUNNING)
+  startedAt       DateTime   @default(now())
+  completedAt    DateTime?
+  recordsProcessed Int        @default(0)
+  // Stack trace or error message, captured if the sync threw.
+  errorMessage   String?    @db.Text
+
+  @@index([kind, startedAt])
+  @@index([status, startedAt])
 }
 
 // User-saved teams or players. Linked to Auth.js User. Defined here in

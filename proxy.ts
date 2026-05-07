@@ -22,10 +22,12 @@ export const proxy = auth((req) => {
 // Matcher: match everything EXCEPT the public paths and Next/static assets.
 // The negative lookahead `(?!...)` excludes these from being matched.
 //   - api/auth   : Auth.js endpoints must stay public (chicken-and-egg)
+//   - api/sync   : Cron-driven sync endpoints — they have their own
+//                  CRON_SECRET auth, must not be redirected to /signin
 //   - signin     : the sign-in page itself
 //   - _next      : Next.js internals (HMR, JS chunks, image optimization)
 //   - icon       : the generated favicon route
 //   - .*\\..*    : files with an extension (favicon.ico, robots.txt, etc.)
 export const config = {
-  matcher: ["/((?!api/auth|signin|_next|icon|.*\\..*).*)"],
+  matcher: ["/((?!api/auth|api/sync|signin|_next|icon|.*\\..*).*)"],
 };
