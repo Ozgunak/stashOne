@@ -158,6 +158,49 @@ export const scoreResponseSchema = z.object({
   games: z.array(gameSchema).default([]),
 });
 
+// ---------- Playoff bracket --------------------------------------------
+// /v1/playoff-series/carousel/{seasonId}
+//
+// Returns the full bracket as a list of rounds. Each round has 1+ series
+// (Round 1: 8 series, Round 2: 4, Round 3: 2, Final: 1).
+//
+// Series with no team yet (e.g. future round, opponents TBD) have
+// `topSeed`/`bottomSeed` as objects with abbrev "TBD" or are absent
+// entirely. We keep `topSeed`/`bottomSeed` optional to be resilient
+// to either pattern.
+
+const playoffSeedSchema = z.object({
+  id: z.number().int().optional(),
+  abbrev: z.string().optional(),
+  wins: z.number().int(),
+  logo: z.string().url().optional(),
+  darkLogo: z.string().url().optional(),
+});
+
+export const playoffBracketResponseSchema = z.object({
+  seasonId: z.number().int(),
+  currentRound: z.number().int().nullable().optional(),
+  rounds: z.array(
+    z.object({
+      roundNumber: z.number().int(),
+      roundLabel: z.string(),
+      roundAbbrev: z.string(),
+      series: z.array(
+        z.object({
+          seriesLetter: z.string(),
+          roundNumber: z.number().int(),
+          seriesLabel: z.string(),
+          topSeed: playoffSeedSchema.optional(),
+          bottomSeed: playoffSeedSchema.optional(),
+          neededToWin: z.number().int().optional(),
+          winningTeamId: z.number().int().optional(),
+          losingTeamId: z.number().int().optional(),
+        }),
+      ),
+    }),
+  ),
+});
+
 // ---------- Inferred TS types -----------------------------------------
 
 export type StandingsResponse = z.infer<typeof standingsResponseSchema>;
@@ -165,3 +208,4 @@ export type RosterResponse = z.infer<typeof rosterResponseSchema>;
 export type PlayerResponse = z.infer<typeof playerResponseSchema>;
 export type ScheduleResponse = z.infer<typeof scheduleResponseSchema>;
 export type ScoreResponse = z.infer<typeof scoreResponseSchema>;
+export type PlayoffBracketResponse = z.infer<typeof playoffBracketResponseSchema>;

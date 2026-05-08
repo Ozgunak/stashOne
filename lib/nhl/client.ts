@@ -16,11 +16,13 @@ import {
   playerResponseSchema,
   scheduleResponseSchema,
   scoreResponseSchema,
+  playoffBracketResponseSchema,
   type StandingsResponse,
   type RosterResponse,
   type PlayerResponse,
   type ScheduleResponse,
   type ScoreResponse,
+  type PlayoffBracketResponse,
 } from "./schemas";
 
 const BASE = "https://api-web.nhle.com/v1";
@@ -136,4 +138,16 @@ export async function getSchedule(
  */
 export async function getScores(dateYmd: string): Promise<ScoreResponse> {
   return nhlFetch(`/score/${dateYmd}`, scoreResponseSchema);
+}
+
+/**
+ * Playoff bracket — full tree for a season as an array of rounds.
+ * Returns rounds in order with each containing 0–8 series.
+ *
+ * @param seasonId  e.g. "20252026" (current playoffs)
+ */
+export async function getPlayoffBracket(
+  seasonId: string,
+): Promise<PlayoffBracketResponse> {
+  return nhlFetch(`/playoff-series/carousel/${seasonId}`, playoffBracketResponseSchema);
 }
