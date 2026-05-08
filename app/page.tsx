@@ -37,9 +37,9 @@ export default async function Home() {
           {[
             { label: "Teams", href: "/teams", ready: true },
             { label: "Players", href: "/players", ready: true },
-            { label: "Schedule", milestone: "N7" },
-            { label: "Scores", milestone: "N7" },
-            { label: "Standings", milestone: "N7" },
+            { label: "Schedule", href: "/schedule", ready: true },
+            { label: "Scores", href: "/scores", ready: true },
+            { label: "Standings", href: "/standings", ready: true },
             { label: "Playoffs", milestone: "N8" },
           ].map((p) =>
             p.ready ? (
