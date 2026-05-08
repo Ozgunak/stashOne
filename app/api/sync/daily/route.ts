@@ -16,7 +16,7 @@
 // others — partial progress is fine for sync data.
 
 import { prisma } from "@/lib/prisma";
-import { getStandings, getRoster, getSchedule } from "@/lib/nhl/client";
+import { getStandings, getRoster, getSchedule, getScores } from "@/lib/nhl/client";
 import type { Position, GameStatus } from "@/generated/prisma/enums";
 import { checkCronAuth, runWithSyncLog } from "@/lib/sync/run-sync";
 
@@ -54,6 +54,15 @@ function mapGameState(state: string): GameStatus {
 
 function todayYmdUtc(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function* lastNDaysUtc(n: number): IterableIterator<string> {
+  const today = new Date();
+  for (let i = 0; i < n; i++) {
+    const d = new Date(today);
+    d.setUTCDate(d.getUTCDate() - i);
+    yield d.toISOString().slice(0, 10);
+  }
 }
 
 export async function POST(req: Request) {
@@ -201,6 +210,26 @@ export async function POST(req: Request) {
             });
             totalProcessed++;
           }
+        }
+      }
+
+      // ---- 4. Scores (recent 3-day lookback) ----
+      // Updates the games inserted above with final scores when they
+      // become available. Same logic as /api/sync/scores but inlined
+      // here since Hobby plan caps cron jobs at 1 daily — we can't run
+      // /api/sync/scores on its own schedule.
+      for (const ymd of lastNDaysUtc(3)) {
+        const day = await getScores(ymd);
+        for (const g of day.games) {
+          const result = await prisma.game.updateMany({
+            where: { externalId: g.id },
+            data: {
+              status: mapGameState(g.gameState),
+              homeScore: g.homeTeam.score ?? null,
+              awayScore: g.awayTeam.score ?? null,
+            },
+          });
+          totalProcessed += result.count;
         }
       }
 
