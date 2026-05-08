@@ -9,6 +9,7 @@
 //
 // Both fire in parallel via Promise.all.
 
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -95,8 +96,7 @@ export default async function PlayerPage({
       {/* Header */}
       <header className="mb-6 flex items-center gap-4">
         {dbPlayer.headshotUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={dbPlayer.headshotUrl}
             alt=""
             width={80}
@@ -138,8 +138,7 @@ export default async function PlayerPage({
             />
           )}
           {dbPlayer.team?.logoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={dbPlayer.team.logoUrl}
               alt=""
               width={48}

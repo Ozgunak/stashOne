@@ -3,6 +3,7 @@
 // Roster comes from Player rows whose teamId matches; standings come
 // from the team row itself. Both kept fresh by the daily cron sync.
 
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -83,8 +84,7 @@ export default async function TeamPage({
 
       <header className="mb-6 flex items-center gap-4">
         {team.logoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={team.logoUrl} alt="" width={64} height={64} className="shrink-0" />
+          <Image src={team.logoUrl} alt="" width={64} height={64} className="shrink-0" />
         )}
         <div className="flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
@@ -175,8 +175,7 @@ function RosterGroup({ label, players }: { label: string; players: RosterPlayer[
               className="flex items-center gap-3 rounded-md border border-zinc-200 bg-white p-2 hover:border-black hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-50 dark:hover:bg-zinc-900"
             >
               {p.headshotUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={p.headshotUrl}
                   alt=""
                   width={40}

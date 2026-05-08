@@ -3,6 +3,7 @@
 // Auth is required (proxy enforces, page double-checks). The query
 // filters by userId — same M4 lesson, applied to NHL favorites.
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -112,8 +113,7 @@ export default async function FavoritesPage() {
                       className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 hover:border-black hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-50 dark:hover:bg-zinc-900"
                     >
                       {t.logoUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={t.logoUrl} alt="" width={40} height={40} className="shrink-0" />
+                        <Image src={t.logoUrl} alt="" width={40} height={40} className="shrink-0" />
                       )}
                       <div className="min-w-0">
                         <div className="truncate text-sm font-semibold text-black dark:text-zinc-50">
@@ -144,8 +144,7 @@ export default async function FavoritesPage() {
                       className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 hover:border-black hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-50 dark:hover:bg-zinc-900"
                     >
                       {p.headshotUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={p.headshotUrl}
                           alt=""
                           width={48}

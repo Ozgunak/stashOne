@@ -9,6 +9,8 @@
 // Out-of-season: NHL returns 200 with empty rounds. We render a friendly
 // "between seasons" placeholder.
 
+import Image from "next/image";
+
 import { getPlayoffBracket, NhlApiError } from "@/lib/nhl/client";
 import type { PlayoffBracketResponse } from "@/lib/nhl/schemas";
 
@@ -148,8 +150,7 @@ function SeedRow({
     <div className="flex items-center justify-between gap-2 py-1">
       <div className="flex items-center gap-2 min-w-0">
         {seed.logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={seed.logo} alt="" width={24} height={24} className="shrink-0" />
+          <Image src={seed.logo} alt="" width={24} height={24} className="shrink-0" />
         )}
         <span
           className={`text-sm ${

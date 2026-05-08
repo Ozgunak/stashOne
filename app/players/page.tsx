@@ -5,6 +5,7 @@
 // URL state owns everything: ?q=mcdavid&team=EDM&pos=C&page=2
 // Each filter is independent; clearing one preserves the others.
 
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -129,8 +130,7 @@ export default async function PlayersPage({
                   className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 hover:border-black hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-50 dark:hover:bg-zinc-900"
                 >
                   {p.headshotUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={p.headshotUrl}
                       alt=""
                       width={48}

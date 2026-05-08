@@ -14,6 +14,7 @@
 // This is the architecture lesson: the user-facing path never crosses
 // the network to a service we don't control.
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
@@ -88,8 +89,7 @@ export default async function TeamsPage() {
                     className="flex items-center gap-3 text-black hover:underline dark:text-zinc-50"
                   >
                     {t.logoUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={t.logoUrl} alt="" width={28} height={28} className="shrink-0" />
+                      <Image src={t.logoUrl} alt="" width={28} height={28} className="shrink-0" />
                     )}
                     <span className="flex flex-col">
                       <span className="font-semibold">{t.name}</span>

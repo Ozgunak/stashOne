@@ -1,5 +1,6 @@
 // /scores — completed games from the last 7 days.
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
@@ -159,8 +160,7 @@ function TeamScoreRow({
         }`}
       >
         {logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt="" width={24} height={24} className="shrink-0" />
+          <Image src={logo} alt="" width={24} height={24} className="shrink-0" />
         )}
         <span className="font-mono text-xs text-zinc-500">{abbr}</span>
         <span className="hidden sm:inline">{name}</span>

@@ -8,6 +8,7 @@
 // Data: all from Team rows. The divisional grouping + wildcard logic
 // is computed on the server.
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
@@ -162,8 +163,7 @@ function DivisionBlock({
                     className="flex items-center gap-2 hover:underline"
                   >
                     {t.logoUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={t.logoUrl}
                         alt=""
                         width={20}

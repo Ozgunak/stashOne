@@ -3,6 +3,7 @@
 // Data: all from Postgres (sync pipeline keeps it fresh). We filter
 // status NOT IN (FINAL, POSTPONED) to show "upcoming or live."
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
@@ -134,8 +135,7 @@ function TeamCell({ logo, abbr, name }: { logo: string | null; abbr: string; nam
       className="flex items-center gap-2 text-sm hover:underline"
     >
       {logo && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt="" width={24} height={24} className="shrink-0" />
+        <Image src={logo} alt="" width={24} height={24} className="shrink-0" />
       )}
       <span className="font-mono text-xs text-zinc-500">{abbr}</span>
       <span className="hidden font-medium text-black sm:inline dark:text-zinc-50">
