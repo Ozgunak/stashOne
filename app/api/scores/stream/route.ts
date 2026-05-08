@@ -21,8 +21,17 @@ import { prisma } from "@/lib/prisma";
 // Prisma and `setInterval`/`setTimeout` semantics that work cleanly
 // with streams. Edge runtime would also work but with constraints.
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+// Vercel Hobby plan caps function execution at 10s by default. Bumping
+// to 60s (the Hobby max) lets the stream live longer between forced
+// EventSource reconnects.
+export const maxDuration = 60;
 
 const TICK_MS = 10_000;
+// 2KB of padding to defeat buffering proxies that hold small responses
+// before flushing. Sent once at connection time. Browsers ignore SSE
+// comment lines (those starting with ":").
+const INITIAL_PADDING = ":" + " ".repeat(2048) + "\n\n";
 
 type GameSnapshot = {
   id: string;
@@ -94,7 +103,16 @@ export async function GET(req: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       let lastKey = "";
-      let demoTick = 0;
+      // Snapshot of when the *current UTC minute* started — used as a
+      // stable anchor so demoTick keeps growing across reconnects.
+      // (If we used Date.now() at connection time, each reconnect
+      // would reset demoTick to 1.)
+      const demoEpoch = Math.floor(Date.now() / 60_000) * 60_000;
+
+      // Flush padding immediately so any buffering proxy releases the
+      // initial response. The browser fires EventSource "open" once
+      // it receives ~2KB.
+      controller.enqueue(encoder.encode(INITIAL_PADDING));
 
       function emit(eventName: string, payload: unknown) {
         // SSE format: each event is one or more `field: value\n` lines,
@@ -127,14 +145,18 @@ export async function GET(req: Request) {
             ];
           }
 
-          // Demo mutation: bump the home score of the first game every
-          // tick so the user sees something move.
+          // Time-derived tick so the score keeps advancing across
+          // reconnects (Vercel Hobby kills functions after 60s, so
+          // EventSource reconnects automatically — without this
+          // the score would reset to 1 each time).
+          const demoTick = Math.floor((Date.now() - demoEpoch) / TICK_MS) + 1;
+
+          // Demo mutation: home score = demoTick (1, 2, 3, ...).
           if (demo && games.length > 0) {
-            demoTick++;
             const g = games[0];
             games[0] = {
               ...g,
-              homeScore: ((g.homeScore ?? 0) + 1),
+              homeScore: demoTick,
               status: "LIVE",
             };
           }
