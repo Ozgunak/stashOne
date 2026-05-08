@@ -106,7 +106,26 @@ export async function GET(req: Request) {
 
       async function sendUpdate() {
         try {
-          const games = await readTodaysGames();
+          let games = await readTodaysGames();
+
+          // Demo mode: if there are no real games today (offseason or
+          // an off-day mid-playoffs), fabricate one so the user can
+          // see the stream wiring in action. The fabricated game is
+          // never written to the DB — it lives only in this response.
+          if (demo && games.length === 0) {
+            games = [
+              {
+                id: "demo-game-1",
+                externalId: 999_000_001,
+                status: "SCHEDULED",
+                homeAbbrev: "EDM",
+                awayAbbrev: "BOS",
+                homeScore: 0,
+                awayScore: 0,
+                startTimeUtc: new Date().toISOString(),
+              },
+            ];
+          }
 
           // Demo mutation: bump the home score of the first game every
           // tick so the user sees something move.
