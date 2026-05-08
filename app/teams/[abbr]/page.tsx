@@ -6,7 +6,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import FavoriteButton from "@/components/favorite-button";
 
 export const metadata = { title: "Team" };
 export const dynamic = "force-dynamic";
@@ -47,6 +49,23 @@ export default async function TeamPage({
 
   if (!team) notFound();
 
+  // Resolve current user's favorite status for this team. Auth is
+  // already enforced by the proxy, so session.user.id will be present.
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  const isFavorited = userId
+    ? !!(await prisma.userFavorite.findUnique({
+        where: {
+          userId_kind_externalId: {
+            userId,
+            kind: "TEAM",
+            externalId: team.externalId,
+          },
+        },
+        select: { id: true },
+      }))
+    : false;
+
   // Group players by position bucket.
   const forwards = team.players.filter((p) => p.position === "C" || p.position === "LW" || p.position === "RW");
   const defensemen = team.players.filter((p) => p.position === "D");
@@ -67,7 +86,7 @@ export default async function TeamPage({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={team.logoUrl} alt="" width={64} height={64} className="shrink-0" />
         )}
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
             {team.name}
           </h1>
@@ -75,6 +94,14 @@ export default async function TeamPage({
             {team.division ?? "—"} Division · {team.conference ?? "—"} Conference
           </p>
         </div>
+        {userId && (
+          <FavoriteButton
+            kind="TEAM"
+            externalId={team.externalId}
+            initialFavorited={isFavorited}
+            label={`Favorite ${team.name}`}
+          />
+        )}
       </header>
 
       <section className="mb-8 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">

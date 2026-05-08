@@ -12,8 +12,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPlayer, NhlApiError } from "@/lib/nhl/client";
+import FavoriteButton from "@/components/favorite-button";
 
 export const metadata = { title: "Player" };
 export const revalidate = 600;
@@ -65,6 +67,22 @@ export default async function PlayerPage({
 
   const stats = apiResult?.featuredStats?.regularSeason?.subSeason ?? null;
 
+  // Resolve current user's favorite status for this player.
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  const isFavorited = userId
+    ? !!(await prisma.userFavorite.findUnique({
+        where: {
+          userId_kind_externalId: {
+            userId,
+            kind: "PLAYER",
+            externalId: dbPlayer.externalId,
+          },
+        },
+        select: { id: true },
+      }))
+    : false;
+
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">
       <Link
@@ -88,7 +106,7 @@ export default async function PlayerPage({
         ) : (
           <div className="h-20 w-20 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800" />
         )}
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
             {dbPlayer.firstName} {dbPlayer.lastName}
             {dbPlayer.jerseyNumber != null && (
@@ -110,16 +128,26 @@ export default async function PlayerPage({
             )}
           </p>
         </div>
-        {dbPlayer.team?.logoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={dbPlayer.team.logoUrl}
-            alt=""
-            width={48}
-            height={48}
-            className="ml-auto shrink-0"
-          />
-        )}
+        <div className="flex items-center gap-3">
+          {userId && (
+            <FavoriteButton
+              kind="PLAYER"
+              externalId={dbPlayer.externalId}
+              initialFavorited={isFavorited}
+              label={`Favorite ${dbPlayer.firstName} ${dbPlayer.lastName}`}
+            />
+          )}
+          {dbPlayer.team?.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={dbPlayer.team.logoUrl}
+              alt=""
+              width={48}
+              height={48}
+              className="shrink-0"
+            />
+          )}
+        </div>
       </header>
 
       {/* Stats card (degraded gracefully if API failed) */}

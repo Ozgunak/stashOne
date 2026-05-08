@@ -24,6 +24,12 @@ export default async function Header() {
 
       {session?.user ? (
         <div className="flex items-center gap-3 text-sm">
+          <Link
+            href="/favorites"
+            className="text-zinc-700 hover:text-black hover:underline dark:text-zinc-300 dark:hover:text-zinc-50"
+          >
+            Favorites
+          </Link>
           {/*
             Email is hidden on phone-narrow screens (<640px). The Sign-out
             button stays visible. Avoids cramping the header on mobile.
