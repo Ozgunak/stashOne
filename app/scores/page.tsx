@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
 import LocalTime from "@/components/local-time";
+import LiveScores from "@/components/live-scores";
 
 export const metadata = { title: "Scores" };
 export const dynamic = "force-dynamic";
@@ -41,7 +42,14 @@ function ymdUtc(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export default async function ScoresPage() {
+export default async function ScoresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ demo?: string }>;
+}) {
+  const { demo: demoParam } = await searchParams;
+  const demo = demoParam === "1";
+
   const games = await getGames();
 
   const byDay = new Map<string, GameRow[]>();
@@ -64,6 +72,11 @@ export default async function ScoresPage() {
           Last {WINDOW_DAYS} days · {games.length} games
         </span>
       </div>
+
+      {/* Live scoreboard for today's games — SSE-driven, updates without
+          full-page refresh. Renders even when there are no historical
+          games this week (offseason). */}
+      <LiveScores demo={demo} />
 
       {games.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 px-6 py-16 text-center dark:border-zinc-700">
